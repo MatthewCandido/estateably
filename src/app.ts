@@ -1,5 +1,6 @@
 import express from 'express';
 import * as bodyParser from 'body-parser';
+import mongoose from 'mongoose';
  
 class App {
   public app: express.Application;
@@ -8,7 +9,8 @@ class App {
   constructor(controllers:[any], port:number) {
     this.app = express();
     this.port = port;
- 
+    
+    this.connectToTheDatabase();
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
   }
@@ -27,6 +29,19 @@ class App {
     this.app.listen(this.port, () => {
       console.log(`App listening on the port ${this.port}`);
     });
+  }
+
+  private connectToTheDatabase() {
+    const {
+      MONGO_USER,
+      MONGO_PASSWORD,
+      MONGO_PATH,
+    } = process.env;
+    mongoose.connect(
+        `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_PATH}?retryWrites=true&w=majority`,
+        {},
+        () => console.log(" Mongoose is connected")
+    );
   }
 }
  
