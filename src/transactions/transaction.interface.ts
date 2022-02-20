@@ -1,7 +1,5 @@
-import TransactionType from './transactionType.interface';
-
 interface Transaction {
-    type: TransactionType,
+    category: string,
     description: string,
     value: number
 }
