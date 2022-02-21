@@ -46,7 +46,7 @@ class App {
     mongoose.connect(
         `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_PATH}?retryWrites=true&w=majority`,
         {},
-        () => console.log(" Mongoose is connected")
+        (err) => {if (err) console.log(err)}
     );
   }
 }
