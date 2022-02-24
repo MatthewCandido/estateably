@@ -2,6 +2,8 @@ import express from 'express';
 import * as bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import errorMiddleware from './middleware/error.middleware';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerDocument } from './swagger/swagger';
  
 class App {
   public app: express.Application;
@@ -15,6 +17,8 @@ class App {
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
     this.initializeErrorHandling();
+
+    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   }
  
   private initializeMiddlewares() {
