@@ -5,8 +5,10 @@ import transactionModel from './transactions.model';
 import TransactionNotFoundException from '../exceptions/TransactionNotFoundException';
 import TransactionCategoryNotFoundException from '../exceptions/TransactionCategoryNotFoundException';
 import InternalServerErrorException from '../exceptions/InternalServerErrorException';
+import SearchNoResultsException from '../exceptions/SearchNoResultsException';
 import validationMiddleware from '../middleware/validation.middleware';
 import CreateTransactionDto from './transaction.dto';
+import prepareTransactionsForDataTable from '../utils/transformData';
 
 class TransactionsController implements Controller {
     public path = '/transactions';
@@ -21,6 +23,8 @@ class TransactionsController implements Controller {
         this.router.get(this.path, this.getAllTransactions);
         this.router.get(`${this.path}/:id`, this.getTransactionById);
         this.router.get(`${this.path}/category/:category`, this.getTransactionByCategory);
+        this.router.get(`${this.path}/search/:field/:value`, this.getTransactionByField);
+        this.router.get(`${this.path}/search/value/:minvalue/:maxvalue`, this.getTransactionByValueRange);
         this.router.patch(`${this.path}/:id`, validationMiddleware(CreateTransactionDto, true), this.modifyTransaction);
         this.router.delete(`${this.path}/:id`, this.deleteATransaction);
         this.router.post(this.path, validationMiddleware(CreateTransactionDto), this.createATransaction);
@@ -53,11 +57,50 @@ class TransactionsController implements Controller {
         try {
             const category = request.params.category;
             const transactions = await this.transaction.find({ category: `${category}`}).exec();
-            console.log(typeof transactions);
             if (transactions && transactions.length) {
                 response.send(transactions);
             } else {
                 next(new TransactionCategoryNotFoundException(category));
+            }
+        } catch (error: any) {
+            next(new InternalServerErrorException(error));
+        }
+    }
+
+    private getTransactionByField = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
+        try {
+            const field = request.params.field;
+            const value = request.params.value;
+            let transactions;
+        
+            if (field !== "value") {
+                transactions = await this.transaction.find({ [field]: { $regex: '^' + `${value}`, $options: 'i' }}).exec();
+            } else {
+                transactions = await this.transaction.find({ [field]: value}).exec();
+            }
+            
+            if (transactions && transactions.length) {
+                response.send(transactions);
+            } else {
+                next(new SearchNoResultsException());
+            }
+        } catch (error: any) {
+            next(new InternalServerErrorException(error));
+        }
+    }
+
+    private getTransactionByValueRange = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
+        try {
+            const minValue = request.params.minvalue;
+            const maxValue = request.params.maxvalue;
+            let transactions;
+                   
+            transactions = await this.transaction.find({["value"]:{"$gte": `${minValue}`,"$lte": `${maxValue}`}}).exec();
+         
+            if (transactions && transactions.length) {
+                response.send(transactions);
+            } else {
+                next(new SearchNoResultsException());
             }
         } catch (error: any) {
             next(new InternalServerErrorException(error));
@@ -85,8 +128,9 @@ class TransactionsController implements Controller {
             const transactionData: Transaction = request.body;
             const newTransaction = new this.transaction(transactionData);
             newTransaction.save()
-                .then( savedTransaction => {
-                    response.send(savedTransaction);
+                .then( async savedTransaction => {
+                    const transactions = await this.transaction.find().exec()
+                    response.send(transactions);
                 })
         } catch (error: any) {
             next(new InternalServerErrorException(error));
