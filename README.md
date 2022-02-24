@@ -22,3 +22,6 @@
 6. The back-end should be now running on [localhost:5000](http://localhost:5000/)
 
 You can now access the application on [localhost:3000](http://localhost:3000/).
+
+## API Documentation
+You will find the API documentation on [localhost:5000/api-docs](http://localhost:5000/api-docs) 
