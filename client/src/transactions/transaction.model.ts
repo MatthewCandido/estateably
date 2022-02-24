@@ -1,12 +1,15 @@
-import { observable } from 'mobx';
+import { observable, makeObservable } from 'mobx';
 import {
     serialize,
     deserialize,
-    ClazzOrModelSchema,
-    serializable
+    serializable,
+    createModelSchema,
+    primitive
 } from "serializr"
 
 class Transaction {
+    @serializable
+    @observable _id: string = '';
     @serializable
     @observable category: string = '';
     @serializable
@@ -14,18 +17,36 @@ class Transaction {
     @serializable
     @observable value: number = 0;
 
-    constructor(type: string, description: string, value: number) {
+    constructor(_id: string, type: string, description: string, value: number) {
+        makeObservable(this);
         this.category = type;
         this.description = description;
         this.value = value;
+        this._id = _id;
+
+        createModelSchema(Transaction, {
+            _id: primitive(),
+            category: primitive(),
+            description: primitive(),
+            value: primitive()
+        })
     }
 
-    public serialize = (json: JSON) => {
-        return serialize(json);
+    public serialize = () => {
+        return serialize(this.toJson());
     }
 
-    public deserialize = (obj: ClazzOrModelSchema<unknown>, json: JSON) => {
-        return deserialize(obj, json);
+    public deserialize = () => {
+        return deserialize(Transaction, this.toJson());
+    }
+
+    private toJson = () => {
+        return {
+            "_id": this._id,
+            "category": this.category,
+            "description": this.description,
+            "value": this.value
+        }
     }
 }
 
