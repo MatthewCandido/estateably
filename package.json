@@ -2,6 +2,9 @@
   "name": "estateably",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "16.13.2"
+  },
   "main": "dist/src/server.js",
   "scripts": {
     "start": "node dist/src/server.js",
